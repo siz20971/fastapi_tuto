@@ -1,8 +1,14 @@
 from typing import Optional
 from fastapi import FastAPI
 import hashlib
+import os
 
-app = FastAPI()
+herokuEnv = os.getenv("HEROKU_ENV", "live")
+
+if herokuEnv == 'live':
+    app = FastAPI(docs_url=None, redoc_url=None)
+else:
+    app = FastAPI()
 
 @app.get("/")
 def read_root():
