@@ -1,22 +1,39 @@
 from typing import Optional
 from fastapi import FastAPI
+from starlette.requests import Request
+from starlette.responses import HTMLResponse
+from starlette.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import hashlib
 import os
 
 herokuEnv = os.getenv("HEROKU_ENV", "live")
 
+app = None
 if herokuEnv == 'live':
     app = FastAPI(docs_url=None, redoc_url=None)
 else:
     app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q:Optional[str] = None):
-    return {"item_id": item_id, "q": q}
+# @app.get("/items/{item_id}")
+# def read_item(item_id: int, q:Optional[str] = None):
+#     return {"item_id": item_id, "q": q}
+
+@app.get("/items/{id}", response_class=HTMLResponse)
+async def read_item(request: Request, id: str):
+    return templates.TemplateResponse("item.html", {"request": request, "id": id})
+
+@app.get("/sync_items/{id}", response_class=HTMLResponse)
+def read_item(request: Request, id: str):
+    return templates.TemplateResponse("item.html", {"request": request, "id": id})
 
 @app.get("/hash/{hashType}")
 def getHash(hashType:str, inp:Optional[str]):
